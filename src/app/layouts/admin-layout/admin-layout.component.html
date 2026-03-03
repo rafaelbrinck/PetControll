@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+  <!-- Sidebar (desktop) -->
+  <aside class="hidden md:flex w-64 bg-slate-800 text-white flex-col fixed inset-y-0 left-0 z-40">
+    <div class="p-6 border-b border-slate-700">
+      <h1 class="text-xl font-bold text-indigo-300">Pet Control</h1>
+      <p class="text-slate-400 text-sm mt-0.5">Prontuário veterinário</p>
+    </div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a
+        routerLink="/admin/dashboard"
+        routerLinkActive="bg-indigo-600/80 text-white"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+        Dashboard
+      </a>
+      <a
+        routerLink="/admin/pets"
+        routerLinkActive="bg-indigo-600/80 text-white"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+        Meus Pets
+      </a>
+      <a
+        routerLink="/admin/finance"
+        routerLinkActive="bg-indigo-600/80 text-white"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Financeiro
+      </a>
+      <a
+        routerLink="/admin/inventory"
+        routerLinkActive="bg-indigo-600/80 text-white"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
+      >
+        <!-- ícone de caixa -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v13a2 2 0 002 2h14a2 2 0 002-2V7M5 7l7-4 7 4M12 3v4" />
+        </svg>
+        Almoxarifado
+      </a>
+    </nav>
+    <div class="p-4 border-t border-slate-700">
+      <button
+        (click)="signOut()"
+        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 md:ml-64 flex flex-col min-h-0">
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30 flex-shrink-0">
+      <div class="px-4 py-3 md:px-8 md:py-4 flex items-center justify-between gap-3">
+        <h2 class="text-base md:text-lg font-semibold text-slate-800">Área administrativa</h2>
+        <div class="flex items-center gap-2 text-slate-600 text-xs md:text-sm">
+          <span class="truncate max-w-[160px] md:max-w-none">{{ supabase.currentUser?.email }}</span>
+        </div>
+      </div>
+    </header>
+    <main class="flex-1 p-4 md:p-8 max-w-3xl w-full mx-auto pb-20 md:pb-8 overflow-auto">
+      <router-outlet />
+    </main>
+
+    <!-- Bottom nav (mobile only, estilo app) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.08)]" style="padding-bottom: env(safe-area-inset-bottom, 0);">
+      <div class="flex items-stretch min-h-[56px]">
+        <a
+          routerLink="/admin/dashboard"
+          routerLinkActive="text-indigo-600 bg-indigo-50/80"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[48px] text-slate-500 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+        >
+          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+          <span class="text-[10px] font-medium">Início</span>
+        </a>
+        <a
+          routerLink="/admin/pets"
+          routerLinkActive="text-indigo-600 bg-indigo-50/80"
+          class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[48px] text-slate-500 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+        >
+          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          <span class="text-[10px] font-medium">Pets</span>
+        </a>
+        <a
+          routerLink="/admin/finance"
+          routerLinkActive="text-indigo-600 bg-indigo-50/80"
+          class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[48px] text-slate-500 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+        >
+          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-[10px] font-medium">Financeiro</span>
+        </a>
+        <a
+          routerLink="/admin/inventory"
+          routerLinkActive="text-indigo-600 bg-indigo-50/80"
+          class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[48px] text-slate-500 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+        >
+          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v13a2 2 0 002 2h14a2 2 0 002-2V7M5 7l7-4 7 4M12 3v4" />
+          </svg>
+          <span class="text-[10px] font-medium">Almoxarifado</span>
+        </a>
+        <button
+          type="button"
+          (click)="signOut()"
+          class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[48px] text-slate-500 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+        >
+          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span class="text-[10px] font-medium">Sair</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+</div>

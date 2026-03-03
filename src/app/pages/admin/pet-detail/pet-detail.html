@@ -1,0 +1,231 @@
+@if (loading()) {
+  <div class="flex justify-center py-12">
+    <div class="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+} @else if (error()) {
+  <div class="bg-red-50 border border-red-100 rounded-2xl p-4 text-red-700 text-sm">
+    {{ error() }}
+  </div>
+} @else if (!pet()) {
+  <div class="bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-10 text-center">
+    <p class="text-slate-700 font-semibold">Pet não encontrado</p>
+    <p class="text-slate-500 text-sm mt-1">
+      Verifique o link acessado ou volte para a lista de pets.
+    </p>
+    <a
+      routerLink="/admin/pets"
+      class="inline-flex items-center justify-center mt-4 px-4 py-3 min-h-[48px] rounded-xl bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 transition-colors"
+    >
+      Voltar para lista
+    </a>
+  </div>
+} @else {
+  <div class="space-y-6 md:space-y-8">
+    <!-- Header do pet -->
+    <div class="bg-white rounded-2xl shadow-md border border-slate-100 p-5 flex items-center gap-4">
+      <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+        @if (pet()?.photo_url) {
+          <img
+            [src]="pet()?.photo_url!"
+            [alt]="pet()?.name!"
+            class="w-16 h-16 rounded-full object-cover"
+          />
+        } @else {
+          <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            />
+          </svg>
+        }
+      </div>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-xl font-bold text-slate-900 truncate">{{ pet()?.name }}</h1>
+        <p class="text-slate-600 text-sm mt-0.5 truncate">
+          {{ pet()?.species }} @if (pet()?.breed) { · {{ pet()?.breed }} }
+        </p>
+        <p class="text-slate-400 text-xs mt-0.5">
+          {{ formatAge(pet()?.birth_date ?? null) }} · {{ pet()?.gender | titlecase }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-slate-100 rounded-2xl p-1 flex">
+      <button
+        type="button"
+        (click)="setTab('history')"
+        class="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-medium transition-colors"
+        [class.bg-white]="activeTab() === 'history'"
+        [class.text-slate-900]="activeTab() === 'history'"
+        [class.text-slate-500]="activeTab() !== 'history'"
+      >
+        Histórico
+      </button>
+      <button
+        type="button"
+        (click)="setTab('vaccines')"
+        class="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-medium transition-colors"
+        [class.bg-white]="activeTab() === 'vaccines'"
+        [class.text-slate-900]="activeTab() === 'vaccines'"
+        [class.text-slate-500]="activeTab() !== 'vaccines'"
+      >
+        Vacinas
+      </button>
+      <button
+        type="button"
+        (click)="setTab('care')"
+        class="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-medium transition-colors"
+        [class.bg-white]="activeTab() === 'care'"
+        [class.text-slate-900]="activeTab() === 'care'"
+        [class.text-slate-500]="activeTab() !== 'care'"
+      >
+        Instruções
+      </button>
+      <button
+        type="button"
+        (click)="setTab('weight')"
+        class="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-medium transition-colors"
+        [class.bg-white]="activeTab() === 'weight'"
+        [class.text-slate-900]="activeTab() === 'weight'"
+        [class.text-slate-500]="activeTab() !== 'weight'"
+      >
+        Evolução de Peso
+      </button>
+    </div>
+
+    <!-- Conteúdo das abas -->
+    <div>
+      @if (activeTab() === 'history' && petId) {
+        <app-medical-timeline [petId]="petId" />
+      } @else if (activeTab() === 'vaccines' && petId) {
+        <app-vaccine-list [petId]="petId" />
+      } @else if (activeTab() === 'care' && pet()) {
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Instruções de cuidado</label>
+            <textarea
+              [ngModel]="pet()?.care_notes"
+              (ngModelChange)="pet() && (pet()!.care_notes = $event)"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+              rows="4"
+            ></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Contato Veterinário</label>
+            <input
+              [ngModel]="pet()?.vet_contact"
+              (ngModelChange)="pet() && (pet()!.vet_contact = $event)"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+            />
+          </div>
+          <button
+            (click)="saveCareInfo()"
+            class="inline-flex items-center px-4 py-3 rounded-xl bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 transition-colors"
+          >
+            Salvar
+          </button>
+          <a
+            *ngIf="petId"
+            [routerLink]="['/admin/pets', petId, 'caregiver']"
+            class="inline-block ml-4 text-indigo-600 text-sm hover:underline"
+          >
+            Ver ficha do cuidador
+          </a>
+        </div>
+      } @else if (activeTab() === 'weight' && pet()) {
+        <div class="space-y-6">
+          <div *ngIf="weightLogs().length; else noData">
+            <apx-chart
+              [series]="chartOptions.series"
+              [chart]="chartOptions.chart"
+              [xaxis]="chartOptions.xaxis"
+              [stroke]="chartOptions.stroke"
+              [dataLabels]="chartOptions.dataLabels"
+              [yaxis]="chartOptions.yaxis"
+              class="w-full"
+            ></apx-chart>
+          </div>
+          <ng-template #noData>
+            <div class="text-center text-slate-500">Nenhum registro de peso.</div>
+          </ng-template>
+
+          <div class="text-right">
+            <button
+              type="button"
+              (click)="openWeightSheet()"
+              class="inline-flex items-center px-4 py-3 rounded-xl bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 transition-colors"
+            >
+              Registrar novo peso
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Bottom Sheet: Registrar novo peso -->
+@if (isWeightSheetOpen()) {
+  <!-- Overlay -->
+  <div
+    class="fixed inset-0 bg-slate-900/50 z-40 transition-opacity"
+    (click)="closeWeightSheet()"
+  ></div>
+
+  <!-- Gaveta inferior -->
+  <div
+    class="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl p-6 transform transition-transform duration-300 ease-in-out translate-y-0"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-6"></div>
+    <div class="max-h-[70vh] overflow-y-auto -mx-1 px-1">
+      <h2 class="text-lg font-semibold text-slate-900 mb-1">Registrar novo peso</h2>
+      <p class="text-slate-500 text-xs mb-4">
+        Adicione um novo registro de peso para acompanhar a evolução do pet.
+      </p>
+      <form
+        [formGroup]="weightForm"
+        (ngSubmit)="addWeightEntry(weightForm.value.weight!, weightForm.value.date!)"
+        class="space-y-4"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Peso (kg)</label>
+            <input
+              type="number"
+              formControlName="weight"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Data</label>
+            <input
+              type="date"
+              formControlName="date"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+            />
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="closeWeightSheet()"
+            class="inline-flex items-center px-4 py-3 rounded-xl bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="weightForm.invalid"
+            class="inline-flex items-center px-4 py-3 rounded-xl bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+          >
+            Salvar peso
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

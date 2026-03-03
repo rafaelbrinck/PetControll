@@ -1,0 +1,86 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Novo item de estoque</h1>
+    <p class="text-slate-500 text-sm mt-1">Registre um item que será acompanhado no almoxarifado.</p>
+  </div>
+
+  <div *ngIf="error" class="p-3 rounded-xl bg-red-50 text-red-600 text-sm border border-red-100">
+    {{ error }}
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1.5">Nome do Item</label>
+      <input
+        formControlName="item_name"
+        class="w-full px-4 py-3 min-h-[48px] rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm"
+        [class.border-red-500]="getFieldError('item_name')"
+      />
+      <p *ngIf="getFieldError('item_name')" class="mt-1 text-xs text-red-600">{{ getFieldError('item_name') }}</p>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1.5">Categoria</label>
+      <select
+        formControlName="category"
+        class="w-full px-4 py-3 min-h-[48px] rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm"
+        [class.border-red-500]="getFieldError('category')"
+      >
+        <option value="" disabled selected>Selecione a categoria</option>
+        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+      </select>
+      <p *ngIf="getFieldError('category')" class="mt-1 text-xs text-red-600">{{ getFieldError('category') }}</p>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1.5">Quantidade Atual</label>
+      <input
+        type="number"
+        formControlName="current_quantity"
+        step="0.01"
+        min="0"
+        class="w-full px-4 py-3 min-h-[48px] rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm"
+        [class.border-red-500]="getFieldError('current_quantity')"
+      />
+      <p *ngIf="getFieldError('current_quantity')" class="mt-1 text-xs text-red-600">{{ getFieldError('current_quantity') }}</p>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1.5">Unidade de Medida</label>
+      <input
+        formControlName="unit_measure"
+        class="w-full px-4 py-3 min-h-[48px] rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm"
+        [class.border-red-500]="getFieldError('unit_measure')"
+      />
+      <p *ngIf="getFieldError('unit_measure')" class="mt-1 text-xs text-red-600">{{ getFieldError('unit_measure') }}</p>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1.5">Limite de Alerta</label>
+      <input
+        type="number"
+        formControlName="alert_threshold"
+        min="0"
+        class="w-full px-4 py-3 min-h-[48px] rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm"
+        [class.border-red-500]="getFieldError('alert_threshold')"
+      />
+      <p *ngIf="getFieldError('alert_threshold')" class="mt-1 text-xs text-red-600">{{ getFieldError('alert_threshold') }}</p>
+    </div>
+
+    <div class="pt-2 flex flex-col gap-3 sm:flex-row sm:justify-end">
+      <a
+        routerLink="/admin/inventory"
+        class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-3 min-h-[48px] rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+      >
+        Cancelar
+      </a>
+      <button
+        type="submit"
+        [disabled]="loading"
+        class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-3 min-h-[48px] rounded-xl bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors"
+      >
+        {{ loading ? 'Salvando...' : 'Salvar item' }}
+      </button>
+    </div>
+  </form>
+</div>

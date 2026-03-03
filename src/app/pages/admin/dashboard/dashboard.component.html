@@ -1,0 +1,231 @@
+<div class="space-y-6 pb-12">
+  <!-- SEÇÃO 1: Saudação -->
+  <div class="pt-2">
+    <h1 class="text-3xl font-bold text-slate-900">Olá!</h1>
+    <p class="text-slate-500 mt-2">Aqui está o resumo dos seus pets e alertas importantes.</p>
+  </div>
+
+  <!-- SEÇÃO 2: Medicamentos de Hoje -->
+  <div *ngIf="!isLoading()" class="space-y-4">
+    <h2 class="text-lg font-semibold text-slate-800">Medicamentos de Hoje</h2>
+    <div *ngIf="todaysMeds().length > 0; else noMeds" class="space-y-3">
+      <div *ngFor="let log of todaysMeds()" class="flex items-center justify-between bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-slate-800 truncate">{{ log.medication.name }} ({{ log.medication.dosage }})</p>
+          <p class="text-xs text-slate-500 truncate">{{ log.medication.pet.name }} - {{ log.scheduled_for | date:'shortTime' }}</p>
+        </div>
+        <button
+          (click)="markMedicationDone(log)"
+          [disabled]="log.status==='done'"
+          class="ml-4 w-10 h-10 flex items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-opacity"
+          [class.opacity-50]="log.status==='done'"
+        >
+          ✔
+        </button>
+      </div>
+    </div>
+    <ng-template #noMeds>
+      <p class="text-slate-500 text-sm">Nenhum medicamento agendado para hoje.</p>
+    </ng-template>
+  </div>
+
+  <!-- SEÇÃO 2: KPIs (Grid de Resumo) -->
+  <div *ngIf="!isLoading()" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <!-- Card 1: Total de Pets -->
+    <div class="bg-indigo-50 rounded-2xl p-4 border border-indigo-100">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Meus Pets</p>
+          <p class="text-2xl font-bold text-indigo-900 mt-1">{{ totalPets() }}</p>
+        </div>
+        <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Card 2: Gasto do Mês -->
+    <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Despesa do Mês</p>
+          <p class="text-2xl font-bold text-emerald-900 mt-1">{{ formatReais(monthlyExpenses()) }}</p>
+        </div>
+        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Card 3: Alertas de Estoque -->
+    <div [ngClass]="lowStockCount() > 0 ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'" class="rounded-2xl p-4 border">
+      <div class="flex items-start justify-between">
+        <div>
+          <p [ngClass]="lowStockCount() > 0 ? 'text-red-600' : 'text-slate-600'" class="text-xs font-medium uppercase tracking-wider">Estoque Baixo</p>
+          <p [ngClass]="lowStockCount() > 0 ? 'text-red-900' : 'text-slate-900'" class="text-2xl font-bold mt-1">{{ lowStockCount() }}</p>
+        </div>
+        <svg [ngClass]="lowStockCount() > 0 ? 'text-red-400' : 'text-slate-400'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v13a2 2 0 002 2h14a2 2 0 002-2V7M5 7l7-4 7 4M12 3v4" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Card 4: Alertas Pendentes -->
+    <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Pendências</p>
+          <p class="text-2xl font-bold text-amber-900 mt-1">{{ upcomingAlerts().length }}</p>
+        </div>
+        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton loading para KPIs -->
+  <div *ngIf="isLoading()" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-slate-100 rounded-2xl p-4 h-24 animate-pulse"></div>
+    <div class="bg-slate-100 rounded-2xl p-4 h-24 animate-pulse"></div>
+    <div class="bg-slate-100 rounded-2xl p-4 h-24 animate-pulse"></div>
+    <div class="bg-slate-100 rounded-2xl p-4 h-24 animate-pulse"></div>
+  </div>
+
+  <!-- SEÇÃO 3: Acesso Rápido (Quick Actions) -->
+  <div class="space-y-3">
+    <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Ações Rápidas</h2>
+    <div class="grid grid-cols-3 md:grid-cols-4 gap-4">
+      <!-- Botão 1: Adicionar Despesa -->
+      <a
+        routerLink="/admin/finance/new"
+        class="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all"
+      >
+        <div class="bg-indigo-50 p-3 rounded-full">
+          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <span class="text-xs font-medium text-slate-700 text-center">Nova Despesa</span>
+      </a>
+
+      <!-- Botão 2: Atualizar Estoque -->
+      <a
+        routerLink="/admin/inventory"
+        class="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all"
+      >
+        <div class="bg-emerald-50 p-3 rounded-full">
+          <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v13a2 2 0 002 2h14a2 2 0 002-2V7M5 7l7-4 7 4M12 3v4" />
+          </svg>
+        </div>
+        <span class="text-xs font-medium text-slate-700 text-center">Estoque</span>
+      </a>
+
+      <!-- Botão 3: Cadastrar Pet -->
+      <a
+        routerLink="/admin/pets/new"
+        class="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-rose-200 transition-all"
+      >
+        <div class="bg-rose-50 p-3 rounded-full">
+          <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </div>
+        <span class="text-xs font-medium text-slate-700 text-center">Novo Pet</span>
+      </a>
+
+      <!-- Botão 4: Ver Pets -->
+      <a
+        routerLink="/admin/pets"
+        class="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
+      >
+        <div class="bg-slate-50 p-3 rounded-full">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </div>
+        <span class="text-xs font-medium text-slate-700 text-center">Meus Pets</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4: Requer Atenção (Alertas Críticos) -->
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+    <div class="flex items-center gap-2 mb-4">
+      <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+      <h2 class="text-lg font-semibold text-slate-800">Requer sua atenção</h2>
+    </div>
+
+    <!-- Lista de Alertas -->
+    <div *ngIf="upcomingAlerts().length > 0; else emptyAlerts" class="space-y-3">
+      <div *ngFor="let alert of upcomingAlerts()" class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+        <div
+          [ngClass]="{
+            'bg-red-100': alert.urgency === 'high',
+            'bg-amber-100': alert.urgency === 'medium',
+            'bg-blue-100': alert.urgency === 'low'
+          }"
+          class="p-2 rounded-lg shrink-0"
+        >
+          <svg
+            *ngIf="alert.type === 'vaccine'"
+            [ngClass]="{
+              'text-red-600': alert.urgency === 'high',
+              'text-amber-600': alert.urgency === 'medium',
+              'text-blue-600': alert.urgency === 'low'
+            }"
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <svg
+            *ngIf="alert.type === 'stock'"
+            [ngClass]="{
+              'text-red-600': alert.urgency === 'high',
+              'text-amber-600': alert.urgency === 'medium',
+              'text-blue-600': alert.urgency === 'low'
+            }"
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v13a2 2 0 002 2h14a2 2 0 002-2V7M5 7l7-4 7 4M12 3v4" />
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-slate-900">{{ alert.title }}</p>
+          <p *ngIf="alert.pet_name" class="text-xs text-slate-500 mt-0.5">Pet: {{ alert.pet_name }}</p>
+        </div>
+        <span
+          [ngClass]="{
+            'bg-red-100 text-red-700': alert.urgency === 'high',
+            'bg-amber-100 text-amber-700': alert.urgency === 'medium',
+            'bg-blue-100 text-blue-700': alert.urgency === 'low'
+          }"
+          class="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap"
+        >
+          {{ alert.urgency === 'high' ? 'Urgente' : alert.urgency === 'medium' ? 'Breve' : 'Disponível' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <ng-template #emptyAlerts>
+      <div class="py-8 text-center">
+        <svg class="w-12 h-12 text-emerald-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-slate-700 font-medium">Tudo em dia com seus animais!</p>
+        <p class="text-slate-500 text-sm mt-1">Nenhuma pendência para hoje.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

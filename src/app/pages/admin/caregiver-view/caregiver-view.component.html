@@ -1,0 +1,70 @@
+<div *ngIf="loading" class="space-y-4 py-8">
+  <div class="max-w-xl mx-auto bg-white rounded-2xl border border-slate-100 p-6 shadow-sm animate-pulse">
+    <div class="flex flex-col items-center text-center space-y-3">
+      <div class="w-24 h-24 rounded-full bg-slate-200"></div>
+      <div class="h-5 w-40 bg-slate-200 rounded"></div>
+      <div class="h-4 w-24 bg-slate-100 rounded"></div>
+    </div>
+    <div class="mt-6 space-y-3">
+      <div class="h-4 w-1/2 bg-slate-200 rounded"></div>
+      <div class="h-3 w-full bg-slate-100 rounded"></div>
+      <div class="h-3 w-5/6 bg-slate-100 rounded"></div>
+    </div>
+    <div class="mt-6 h-4 w-28 bg-slate-200 rounded"></div>
+    <div class="mt-3 space-y-2">
+      <div class="h-3 w-3/4 bg-slate-100 rounded"></div>
+      <div class="h-3 w-2/3 bg-slate-100 rounded"></div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="error" class="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700 text-sm">
+  {{ error }}
+</div>
+
+<div *ngIf="!loading && pet" class="prose mx-auto py-6">
+  <!-- Print-friendly wrapper -->
+  <div class="print:p-0">
+    <div class="text-center">
+      <h1 class="text-2xl font-bold">{{ pet.name }}</h1>
+      <p class="text-sm text-slate-600">
+        {{ pet.species }} · {{ formatAge(pet.birth_date) }}
+      </p>
+      <div class="mt-4">
+        <img
+          *ngIf="pet.photo_url"
+          [src]="pet.photo_url"
+          [alt]="pet.name"
+          class="w-32 h-32 object-cover rounded-full mx-auto"
+        />
+      </div>
+    </div>
+
+    <hr class="my-6" />
+
+    <div>
+      <h2 class="text-lg font-semibold">Instruções Diárias</h2>
+      <p>{{ pet.care_notes || 'Nenhuma instrução registrada' }}</p>
+    </div>
+
+    <div class="mt-6">
+      <h2 class="text-lg font-semibold">Saúde e Medicamentos</h2>
+      <ul class="list-disc ml-6">
+        <li *ngFor="let m of meds">{{ m.title }} ({{ m.event_date }})</li>
+        <li *ngIf="meds.length === 0">Nenhum registro encontrado</li>
+      </ul>
+    </div>
+
+    <div class="mt-6 bg-rose-50 p-4 rounded-xl">
+      <h2 class="text-lg font-semibold text-rose-700">Emergência</h2>
+      <p class="text-rose-900 font-medium">{{ pet.vet_contact || 'Sem contato' }}</p>
+    </div>
+
+    <button
+      class="fixed bottom-4 right-4 bg-indigo-600 text-white px-5 py-3 rounded-full shadow-lg hover:bg-indigo-700 transition print:hidden"
+      (click)="print()"
+    >
+      Imprimir Ficha
+    </button>
+  </div>
+</div>

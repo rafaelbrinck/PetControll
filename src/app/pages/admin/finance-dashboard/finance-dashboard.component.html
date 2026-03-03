@@ -1,0 +1,179 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Financeiro</h1>
+    <p class="text-slate-500 text-sm mt-1">Controle de gastos com seus pets</p>
+  </div>
+
+  <!-- Barra de busca de despesas -->
+  <div class="mt-4 md:mt-6">
+    <div class="relative w-full max-w-md">
+      <span class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
+        </svg>
+      </span>
+      <input
+        type="text"
+        name="expenseSearch"
+        [(ngModel)]="searchQuery"
+        placeholder="Buscar por descrição ou categoria"
+        class="w-full pl-11 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+      />
+    </div>
+  </div>
+
+  <!-- Filtros de categoria -->
+  <div class="mt-3">
+    <div class="flex gap-2 pb-2 overflow-x-auto snap-x hide-scrollbar md:flex-wrap">
+      <button
+        type="button"
+        (click)="setCategoryFilter('Todas')"
+        class="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors snap-start"
+        [class.bg-indigo-600]="selectedCategory === 'Todas'"
+        [class.text-white]="selectedCategory === 'Todas'"
+        [class.border-indigo-600]="selectedCategory === 'Todas'"
+        [class.shadow-sm]="selectedCategory === 'Todas'"
+        [class.bg-white]="selectedCategory !== 'Todas'"
+        [class.text-slate-600]="selectedCategory !== 'Todas'"
+        [class.border-slate-200]="selectedCategory !== 'Todas'"
+      >
+        Todas
+      </button>
+      @for (cat of categoryOptions; track cat) {
+        <button
+          type="button"
+          (click)="setCategoryFilter(cat)"
+          class="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors snap-start"
+          [class.bg-indigo-600]="selectedCategory === cat"
+          [class.text-white]="selectedCategory === cat"
+          [class.border-indigo-600]="selectedCategory === cat"
+          [class.shadow-sm]="selectedCategory === cat"
+          [class.bg-white]="selectedCategory !== cat"
+          [class.text-slate-600]="selectedCategory !== cat"
+          [class.border-slate-200]="selectedCategory !== cat"
+        >
+          {{ cat }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (error) {
+    <div class="p-4 rounded-xl bg-red-50 text-red-600 border border-red-100 text-sm">
+      {{ error }}
+    </div>
+  }
+  @if (loading) {
+    <!-- Skeleton de carregamento imitando a estrutura real -->
+    <div class="space-y-6">
+      <!-- Card Gasto Total do Mês (skeleton) -->
+      <div class="bg-slate-200 rounded-3xl h-24 animate-pulse"></div>
+
+      <!-- Ação rápida (skeleton) -->
+      <div class="h-12 rounded-xl bg-slate-100 border border-slate-200 animate-pulse"></div>
+
+      <!-- Lista de Transações (skeleton) -->
+      <div>
+        <div class="h-4 w-28 bg-slate-200 rounded mb-3 animate-pulse"></div>
+        <div class="space-y-3">
+          @for (skeleton of [1, 2, 3]; track skeleton) {
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 animate-pulse">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1 space-y-2">
+                  <div class="h-3 w-16 bg-slate-200 rounded"></div>
+                  <div class="h-4 w-3/4 bg-slate-200 rounded"></div>
+                  <div class="h-3 w-1/3 bg-slate-100 rounded"></div>
+                </div>
+                <div class="h-4 w-16 bg-slate-200 rounded"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <!-- Card Gasto Total do Mês -->
+    <div class="bg-indigo-600 text-white rounded-3xl shadow-md p-6">
+      <p class="text-indigo-100 text-sm font-medium">Gasto total deste mês</p>
+      <p class="text-2xl md:text-3xl font-bold mt-1">{{ formatBRL(totalThisMonth) }}</p>
+    </div>
+
+    <!-- Ação Rápida -->
+    <button
+      type="button"
+      (click)="openExpenseSheet()"
+      class="flex w-full items-center justify-center gap-2 py-3 px-4 min-h-[48px] rounded-xl bg-white border border-slate-200 text-slate-800 font-medium shadow-sm hover:bg-slate-50 active:bg-slate-100 transition-colors"
+    >
+      <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Nova Despesa
+    </button>
+
+    <!-- Lista de Transações -->
+    <div>
+      <h2 class="text-base font-semibold text-slate-800 mb-3">Transações</h2>
+
+      @if (expenses.length === 0) {
+        <div class="bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-8 text-center">
+          <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-slate-700 font-medium">Nenhuma despesa registrada</p>
+          <p class="text-slate-500 text-sm mt-1">Adicione sua primeira despesa para acompanhar os gastos.</p>
+          <a
+            routerLink="/admin/finance/new"
+            class="inline-flex items-center justify-center mt-4 w-full sm:w-auto py-3 px-4 min-h-[48px] rounded-xl bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 transition-colors"
+          >
+            Nova Despesa
+          </a>
+        </div>
+      } @else {
+        <div class="space-y-3">
+          @for (e of expenses; track e.id ?? e.expense_date + e.description) {
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wide">{{ e.category }}</p>
+                  <p class="text-sm font-medium text-slate-900 mt-0.5 truncate">{{ e.description }}</p>
+                  <p class="text-xs text-slate-500 mt-1">{{ formatDate(e.expense_date) }}</p>
+                </div>
+                <p class="text-sm font-bold text-slate-900 shrink-0">{{ formatBRL(e.amount) }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Bottom Sheet: Nova Despesa -->
+  @if (isExpenseSheetOpen) {
+    <!-- Overlay -->
+    <div
+      class="fixed inset-0 bg-slate-900/50 z-40 transition-opacity"
+      (click)="closeExpenseSheet()"
+    ></div>
+
+    <!-- Container da gaveta -->
+    <div
+      class="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl p-6 transform transition-transform duration-300 ease-in-out translate-y-0"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Puxadeira -->
+      <div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-6"></div>
+
+      <!-- Conteúdo: formulário de nova despesa -->
+      <div class="max-h-[70vh] overflow-y-auto -mx-1 px-1">
+        <h2 class="text-lg font-semibold text-slate-900 mb-1">Nova despesa rápida</h2>
+        <p class="text-slate-500 text-xs mb-4">
+          Registre um gasto sem sair do painel financeiro.
+        </p>
+
+        <app-expense-form></app-expense-form>
+      </div>
+    </div>
+  }
+</div>
