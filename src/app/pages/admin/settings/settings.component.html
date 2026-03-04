@@ -1,0 +1,59 @@
+<section class="space-y-4">
+  <h1 class="text-2xl font-semibold text-slate-800">Configurações da Conta</h1>
+
+  <div class="p-4 bg-white rounded-lg shadow-sm border">
+    <h2 class="text-lg font-medium text-slate-700">Compartilhamento Familiar (Family Mode)</h2>
+    <p class="text-sm text-slate-500 mt-1">Membros convidados poderão ver e editar os prontuários, pesos e rotinas de todos os seus animais.</p>
+
+    <form class="mt-4 flex flex-col sm:flex-row gap-2" [formGroup]="form" (ngSubmit)="invite()">
+      <input
+        formControlName="email"
+        type="email"
+        placeholder="Email do membro"
+        class="flex-1 px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-200 outline-none"
+      />
+      <button
+        type="button"
+        (click)="invite()"
+        [disabled]="loading"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+      >
+        Convidar Membro
+      </button>
+    </form>
+
+    <div class="mt-4">
+      <h3 class="text-sm font-medium text-slate-700">Membros com acesso</h3>
+      <ul class="mt-2 divide-y divide-slate-100 bg-white rounded-lg border">
+        <li *ngFor="let u of sharedUsers" class="flex items-center justify-between px-4 py-3">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 016 7h12a4 4 0 011 10.804" />
+            </svg>
+            <span class="text-sm text-slate-700">{{ u.guest_email }}</span>
+          </div>
+          <div>
+            <button
+              type="button"
+              (click)="remove(u.guest_email)"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-red-700 bg-red-50 hover:bg-red-100"
+            >
+              <!-- lixeira -->
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M10 3h4l1 2H9l1-2z" />
+              </svg>
+              Remover
+            </button>
+          </div>
+        </li>
+        <li *ngIf="!sharedUsers.length" class="px-4 py-4 text-sm text-slate-500">Nenhum membro convidado ainda.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div *ngIf="toastMessage" class="fixed right-4 bottom-6 z-50">
+    <div [ngClass]="{ 'bg-green-600 text-white': toastType==='success', 'bg-red-600 text-white': toastType==='error' }" class="px-4 py-2 rounded-md shadow">
+      {{ toastMessage }}
+    </div>
+  </div>
+</section>

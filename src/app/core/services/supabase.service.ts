@@ -1,7 +1,16 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 import { environment } from '../../../data/enviroment';
-import { Pet, Vaccine, MedicalRecord, Expense, InventoryItem, MedicationLog, Medication, WeightLog } from '../../shared/models/models';
+import {
+  Pet,
+  Vaccine,
+  MedicalRecord,
+  Expense,
+  InventoryItem,
+  MedicationLog,
+  Medication,
+  WeightLog,
+} from '../../shared/models/models';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -21,23 +30,57 @@ export class SupabaseService {
       },
     });
     this.supabase.auth.onAuthStateChange((_event, session) => {
+      console.log(
+        '[SupabaseService] onAuthStateChange event:',
+        _event,
+        'session present:',
+        !!session,
+      );
       this.sessionSubject.next(session ?? null);
     });
+
+    // debug: constructed - list localStorage keys (não imprime valores sensíveis)
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const keys: string[] = [];
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const k = window.localStorage.key(i);
+          if (k) keys.push(k!);
+        }
+        console.log('[SupabaseService] constructed. localStorage keys:', keys);
+      } else {
+        console.log('[SupabaseService] constructed (no window/localStorage)');
+      }
+    } catch (e) {
+      console.warn('[SupabaseService] error reading localStorage keys', e);
+    }
   }
 
   /**
    * Restaura a sessão do storage antes do app iniciar. Chamado pelo APP_INITIALIZER.
    */
   async initSession(): Promise<void> {
+    console.log('[SupabaseService] initSession: starting session restore');
     try {
       const { data, error } = await this.supabase.auth.getSession();
-      if (error) throw error;
+      if (error) {
+        console.error('[SupabaseService] initSession: getSession error', error);
+        throw error;
+      }
+      const hasSession = !!data?.session;
+      console.log(
+        '[SupabaseService] initSession: session restored?',
+        hasSession,
+        'user:',
+        data?.session?.user?.email ?? null,
+      );
       this.sessionSubject.next(data.session ?? null);
     } catch (e) {
-      console.error('Erro ao restaurar sessão:', e);
+      console.error('[SupabaseService] Erro ao restaurar sessão:', e);
       this.sessionSubject.next(null);
     } finally {
       this.isSessionRestored.next(true);
+      console.log('[SupabaseService] initSession: isSessionRestored set to true');
     }
   }
 
@@ -51,7 +94,118 @@ export class SupabaseService {
   }
 
   get isAuthenticated(): boolean {
-    return this.sessionSubject.value != null;
+    // Retorna true se já tivermos sessão em memória OU se detectarmos token no localStorage.
+    return this.sessionSubject.value != null || this.isAuthenticatedSync();
+  }
+
+  /**
+   * Verificação síncrona de autenticação baseada no localStorage usado pelo supabase-js.
+   * Retorna true se detectar um token/sessão válida no storage ou na sessão em memória.
+   */
+  isAuthenticatedSync(): boolean {
+    // se já tivermos sessão em memória
+    if (this.sessionSubject.value) {
+      console.log('[SupabaseService] isAuthenticatedSync: session in memory');
+      return true;
+    }
+
+    // ambiente não-browser
+    if (typeof window === 'undefined' || !window.localStorage) {
+      console.log('[SupabaseService] isAuthenticatedSync: no window/localStorage');
+      return false;
+    }
+
+    const storage = window.localStorage;
+
+    // chaves comumente usadas pelo supabase-js v2: 'supabase.auth.token'
+    const knownKeys = ['supabase.auth.token', 'sb:token', 'supabase.auth'];
+
+    let raw: string | null = null;
+
+    for (const k of knownKeys) {
+      try {
+        const v = storage.getItem(k);
+        if (v) {
+          raw = v;
+          console.log('[SupabaseService] isAuthenticatedSync: found known key', k);
+          break;
+        }
+      } catch (e) {
+        console.warn('[SupabaseService] isAuthenticatedSync: error reading known key', k, e);
+      }
+    }
+
+    // fallback: procurar qualquer chave que contenha 'supabase' e 'auth' ou 'token' ou 'session'
+    if (!raw) {
+      for (let i = 0; i < storage.length; i++) {
+        const key = (storage.key(i) as string) || '';
+        const lower = key.toLowerCase();
+        const likely =
+          lower.includes('auth-token') ||
+          (lower.includes('supabase') && /(auth|token|session)/.test(lower)) ||
+          (lower.startsWith('sb-') && (lower.includes('auth') || lower.includes('token')));
+        if (likely) {
+          try {
+            const candidate = storage.getItem(key);
+            if (candidate) {
+              raw = candidate;
+              console.log('[SupabaseService] isAuthenticatedSync: matched localStorage key:', key);
+              break;
+            }
+          } catch (e) {
+            console.warn('[SupabaseService] isAuthenticatedSync: error reading key', key, e);
+          }
+        }
+      }
+    }
+
+    if (!raw) {
+      console.log('[SupabaseService] isAuthenticatedSync: no matching raw stored value found');
+      return false;
+    }
+
+    try {
+      const parsed: any = JSON.parse(raw);
+
+      // formatos possíveis: objeto token com access_token, ou wrapper { currentSession: { access_token } }
+      if (!parsed) return false;
+
+      if (typeof parsed === 'object') {
+        if (parsed.access_token) {
+          console.log(
+            '[SupabaseService] isAuthenticatedSync: found access_token in parsed storage',
+          );
+          return true;
+        }
+        if (parsed.token && parsed.token.access_token) {
+          console.log(
+            '[SupabaseService] isAuthenticatedSync: found token.access_token in parsed storage',
+          );
+          return true;
+        }
+        if (parsed.currentSession && parsed.currentSession.access_token) {
+          console.log(
+            '[SupabaseService] isAuthenticatedSync: found currentSession.access_token in parsed storage',
+          );
+          return true;
+        }
+        if (parsed.session && parsed.session.access_token) {
+          console.log(
+            '[SupabaseService] isAuthenticatedSync: found session.access_token in parsed storage',
+          );
+          return true;
+        }
+        if (parsed.user) {
+          console.log('[SupabaseService] isAuthenticatedSync: found user in parsed storage');
+          return true;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      console.warn('[SupabaseService] isAuthenticatedSync: error parsing stored value', e);
+      return false;
+    }
   }
 
   async signIn(email: string, password: string) {
@@ -341,5 +495,89 @@ export class SupabaseService {
       .single();
     if (error) throw error;
     return data as WeightLog;
+  }
+
+  // FAMILY MODE: shared access management
+  async shareAccount(guestEmail: string): Promise<{ success: boolean; message: string }> {
+    const user = this.currentUser;
+    if (!user) throw new Error('Usuário não autenticado');
+
+    try {
+      // check if already invited
+      const { data: existing, error: errEx } = await this.supabase
+        .from('shared_access')
+        .select('*')
+        .eq('owner_id', user.id)
+        .eq('guest_email', guestEmail)
+        .maybeSingle();
+
+      if (errEx) throw errEx;
+      if (existing) {
+        return { success: false, message: 'Este e-mail já foi convidado.' };
+      }
+
+      // try to find guest profile by email
+      const { data: profile, error: profileErr } = await this.supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', guestEmail)
+        .maybeSingle();
+
+      if (profileErr) throw profileErr;
+
+      const payload: any = {
+        owner_id: user.id,
+        guest_email: guestEmail,
+      };
+
+      if (profile && profile.id) payload.guest_id = profile.id;
+
+      const { data: inserted, error: insertErr } = await this.supabase
+        .from('shared_access')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (insertErr) throw insertErr;
+      return { success: true, message: 'Convite enviado com sucesso.' };
+    } catch (e: any) {
+      console.error('Erro ao compartilhar conta:', e);
+      return { success: false, message: e?.message ?? 'Erro desconhecido' };
+    }
+  }
+
+  async getSharedUsers(): Promise<
+    Array<{ owner_id: string; guest_email: string; guest_id?: string }>
+  > {
+    const user = this.currentUser;
+    if (!user) throw new Error('Usuário não autenticado');
+
+    const { data, error } = await this.supabase
+      .from('shared_access')
+      .select('owner_id, guest_email, guest_id')
+      .eq('owner_id', user.id)
+      .order('guest_email');
+
+    if (error) throw error;
+    return (data ?? []) as Array<{ owner_id: string; guest_email: string; guest_id?: string }>;
+  }
+
+  async removeSharedAccess(guestEmail: string): Promise<{ success: boolean; message: string }> {
+    const user = this.currentUser;
+    if (!user) throw new Error('Usuário não autenticado');
+
+    try {
+      const { error } = await this.supabase
+        .from('shared_access')
+        .delete()
+        .eq('owner_id', user.id)
+        .eq('guest_email', guestEmail);
+
+      if (error) throw error;
+      return { success: true, message: 'Acesso revogado com sucesso.' };
+    } catch (e: any) {
+      console.error('Erro ao remover compartilhamento:', e);
+      return { success: false, message: e?.message ?? 'Erro desconhecido' };
+    }
   }
 }

@@ -12,11 +12,17 @@ export const routes: Routes = [
         path: 'login',
         loadComponent: () =>
           import('./pages/public/login/login.component').then((m) => m.LoginComponent),
+        canActivate: [
+          () => import('./core/guards/no-auth.guard').then((m) => m.noAuthGuard) as any,
+        ],
       },
       {
         path: 'register',
         loadComponent: () =>
           import('./pages/public/register/register.component').then((m) => m.RegisterComponent),
+        canActivate: [
+          () => import('./core/guards/no-auth.guard').then((m) => m.noAuthGuard) as any,
+        ],
       },
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
@@ -64,6 +70,11 @@ export const routes: Routes = [
           import('./pages/admin/inventory-list/inventory-list.component').then(
             (m) => m.InventoryListComponent,
           ),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./pages/admin/settings/settings.component').then((m) => m.SettingsComponent),
       },
       {
         path: 'inventory/new',
